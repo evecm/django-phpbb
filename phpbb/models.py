@@ -43,6 +43,10 @@ class PhpbbUser(models.Model):
     user_lastvisit_int = models.IntegerField(db_column="user_lastvisit")
     user_sig_bbcode_uid = models.CharField(max_length=8)
     user_sig_bbcode_bitfield = models.CharField(max_length=255)
+    eveapi_keyid = models.IntegerField()
+    eveapi_vcode = models.CharField(max_length=64)
+    eveapi_ts = models.CharField(max_length=28)
+
     def __unicode__(self):
         return self.username
     def user_regdate(self):
