@@ -57,11 +57,11 @@ class PhpbbUser(models.Model):
         db_table = settings.PHPBB_TABLE_PREFIX + 'users'
         ordering = ['username']
 
-
-class DjangoPhpbbUserMapping(models.Model):
-    """Maps phpBB users to Django users, 1:1."""
-    django_user = models.OneToOneField(User)
-    phpbb_user = models.ForeignKey(PhpbbUser, unique=True)
+# Disabled as this isn't used, and causes issues deleting users.
+#class DjangoPhpbbUserMapping(models.Model):
+#    """Maps phpBB users to Django users, 1:1."""
+#    django_user = models.OneToOneField(User)
+#    phpbb_user = models.ForeignKey(PhpbbUser, unique=True)
 
 
 class PhpbbForum(models.Model):

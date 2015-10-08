@@ -21,7 +21,10 @@ import logging
 from django.contrib.auth.models import User, Group
 from models import PhpbbUser, PhpbbGroup
 import password as php_password
-
+from ecm.apps.common.models import UserAPIKey
+from ecm.views.account import init_characters
+from ecm.apps.common import api
+from ecm.apps.hr.tasks.users import update_user_accesses
 from django.conf import settings
 
 logging.basicConfig(level=logging.DEBUG)
@@ -44,6 +47,7 @@ class PhpbbBackend:
         Then authenticate."""
         logging.debug("PhpbbBackend::authenticate()")
         user = None
+
         try:
             phpbb_user = PhpbbUser.objects.get(username = username)
         except PhpbbUser.DoesNotExist:
@@ -72,6 +76,18 @@ class PhpbbBackend:
 
                 user.email = phpbb_user.user_email
                 user.save()
+
+                # Do the initial update of the user's characters
+                characters = api.get_account_characters(UserAPIKey(keyID=phpbb_user.eveapi_keyid, vCode=phpbb_user.eveapi_vcode))
+                members, corps = init_characters(user, characters)
+                for corp in corps:
+                    corp.save()
+                for member in members:
+                    member.save()
+
+                # Give the new user roles/groups:
+                update_user_accesses(user)
+
             else:
                 logging.warning("User name empty. Not creating.")
                 return None
@@ -79,6 +95,14 @@ class PhpbbBackend:
         # Django password. Django password is necessary when user wants to log
         # in to the admin interface.
         user.set_password(password)
+
+        # Update the API information always to allow changes from phpBB
+        user_api = UserAPIKey()
+        user_api.keyID = phpbb_user.eveapi_keyid
+        user_api.vCode = phpbb_user.eveapi_vcode
+        user_api.user = user
+        user_api.save()
+
         logging.debug("Returning user '%s'" % user)
         return user
 
